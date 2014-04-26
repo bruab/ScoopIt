@@ -38,7 +38,14 @@ function loadSounds()
     meows[1] = meow1
     meows[2] = meow2
     meows[3] = meow3
-    --TODO add hissing sound on game over
+    angrycat1 = love.audio.newSource("sounds/angrycat1.wav")
+    angrycat2 = love.audio.newSource("sounds/angrycat2.wav")
+    angrycat3 = love.audio.newSource("sounds/angrycat3.wav")
+    angrycats = {}
+    angrycats[1] = angrycat1
+    angrycats[2] = angrycat2
+    angrycats[3] = angrycat3
+    scratch = love.audio.newSource("sounds/scratch.wav")
 end
 
 function loadGraphics()
@@ -141,6 +148,7 @@ function tryScoopPoop()
                 scoopFrozen = true
                 scoopFrozenTimer = 0
                 catMessage = getRandomCatMessage()
+                love.audio.play(scratch)
                 box.containsPoop = false
             end
         end
@@ -206,6 +214,7 @@ end
 function doScoopCatCollision()
     chooseCatCollisionGameOverGraphic()
     currentMessage = "DON'T RUSH ME. You lose."
+    playHiss()
     gameOver = true
 end
 
@@ -272,18 +281,6 @@ end
 ----------------------UTILITY FUNCTIONS------------------------------
 ---------------------------------------------------------------------
 
-function getRandomCatX()
-    randomX = math.random(0,3)
-    offset = 10
-    return 200*randomX + offset
-end
-
-function getRandomCatY()
-    randomY = math.random(0,2)
-    offset = 10
-    return 200*randomY + offset
-end
-
 function drawMessage()
     love.graphics.setColor(0,0,0)
     love.graphics.setNewFont(36)
@@ -339,5 +336,10 @@ end
 function playMeow()
     index = math.random(1,3)
     love.audio.play(meows[index])
+end
+
+function  playHiss()
+    index = math.random(1,3)
+    love.audio.play(angrycats[index])
 end
 
