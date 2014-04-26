@@ -7,29 +7,38 @@ require "litterbox"
 function love.load()
     math.randomseed(os.time())
     gameOver = false
-    elapsedTime = 0
-    catTimer = 0
-    catIncrement = 5
     catOnScreen = false
-    poopTimer = 0
+    scoopFrozen = false
     litterBoxes = {}
-    dirtyLitterboxes = 0
     scoopX = 320
     scoopY = 250
+    currentMessage = ""
+    catIncrement = 5
+    scoopFreezeTimeout = 2
+    loadGraphics()
+    setupLitterboxes()
+    currentBox = chooseRandomLitterbox()
+    initializeTimers()
+end
+
+function initializeTimers()
+    elapsedTime = 0
+    catTimer = 0
+    poopTimer = 0
+    scoopFrozenTimer = 0
+end
+
+function loadGraphics()
     litterbox = love.graphics.newImage("images/litterbox.png")
     cat = love.graphics.newImage("images/cat.png")
     scoop = love.graphics.newImage("images/scoop.png")
     poop = love.graphics.newImage("images/poop.png")
-    --cat is 120x90
-    --litterbox is 150x42
-    --scoop is 75x75
     gameOver1 = love.graphics.newImage("images/angrycat1.jpg")
     gameOver2 = love.graphics.newImage("images/angrycat2.jpg")
     gameOver3 = love.graphics.newImage("images/angrycat3.jpg")
     gameOver4 = love.graphics.newImage("images/giantpoop.png")
     love.graphics.setNewFont(36)
     love.graphics.setBackgroundColor(255,255,255)
-    setupLitterboxes()
 end
 
 function setupLitterboxes()
@@ -51,6 +60,8 @@ function love.update(dt)
         updateTimers(dt)
         updateCat()
         updateScoop(dt)
+    end
+    if not gameOver then
         checkPoopStatus()
     end
 end
@@ -62,6 +73,12 @@ function updateTimers(dt)
         poopTimer = poopTimer + dt
         if poopTimer > catIncrement / 2 then
             poopOnScreen = false
+        end
+    end
+    if scoopFrozen then
+        scoopFrozenTimer = scoopFrozenTimer + dt
+        if scoopFrozenTimer > scoopFreezeTimeout then
+            scoopFrozen = false
         end
     end
     if elapsedTime > 60 then
@@ -81,6 +98,7 @@ end
 
 function updateCat()
     updateCatLocation()
+    --TODO anything else?
 end
 
 function updateCatLocation()
@@ -98,10 +116,26 @@ function updateCatLocation()
 end
 
 function updateScoop(dt)
-    updateScoopLocation(dt)
-    checkForScoopEdgeCollision()
-    checkForScoopCatCollision()
-    --checkForScoopAction??
+    if not scoopFrozen then 
+        updateScoopLocation(dt)
+        checkForScoopEdgeCollision()
+        checkForScoopCatCollision()
+        if love.keyboard.isDown(" ") then
+            tryScoopPoop()
+        end
+    end
+end
+
+function tryScoopPoop()
+    for i,box in ipairs(litterBoxes) do
+        if box.containsPoop then
+            if box:collision(scoopX, scoopY) then
+                scoopFrozen = true
+                scoopFrozenTimer = 0
+                box.containsPoop = false
+            end
+        end
+    end
 end
 
 function updateScoopLocation(dt)
@@ -117,8 +151,6 @@ function updateScoopLocation(dt)
     if love.keyboard.isDown("right") then
         scoopX = scoopX + dt * 100
     end
-    checkForScoopEdgeCollision()
-    checkForScoopCatCollision()
 end
 
 function checkForScoopEdgeCollision()
@@ -164,8 +196,8 @@ end
 
 function doScoopCatCollision()
     chooseCatCollisionGameOverGraphic()
-    gameOverMessage = "DON'T RUSH ME"
-    doGameOver()
+    currentMessage = "DON'T RUSH ME. You lose."
+    gameOver = true
 end
 
 function checkPoopStatus()
@@ -177,8 +209,10 @@ function checkPoopStatus()
     end
     if count == 12 then
         gameOverGraphic = gameOver4
-        gameOverMessage = "All full!"
-        doGameOver()
+        currentMessage = "At capacity. You lose."
+        gameOver = true
+    else
+        currentMessage = "Dirty litterboxes: "..count
     end
 end
 
@@ -192,7 +226,7 @@ function love.draw()
         drawCat()
         drawPoop()
         drawScoop()
-        --drawMessage()
+        drawMessage()
     else
         drawGameOver()
     end
@@ -222,7 +256,7 @@ end
 
 function drawGameOver()
     love.graphics.draw(gameOverGraphic, 0, 0)
-    drawMessage(gameOverMessage)
+    drawMessage()
 end
 
 ---------------------------------------------------------------------
@@ -241,14 +275,10 @@ function getRandomCatY()
     return 200*randomY + offset
 end
 
-function drawMessage(message)
+function drawMessage()
     love.graphics.setColor(0,0,0)
-    love.graphics.print(message, 20, 550)
+    love.graphics.print(currentMessage, 20, 550)
     love.graphics.setColor(255,255,255)
-end
-
-function doGameOver()
-    gameOver = true
 end
 
 function chooseCatCollisionGameOverGraphic()
