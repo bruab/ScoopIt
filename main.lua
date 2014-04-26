@@ -3,6 +3,8 @@
 ---------------------------------------------------------------------
 
 function love.load()
+    math.randomseed(os.time())
+    gameOver = false
     elapsedTime = 0
     catTimer = 0
     catIncrement = 5
@@ -16,6 +18,9 @@ function love.load()
     --cat is 120x90
     --litterbox is 150x42
     --scoop is 75x75
+    gameOver1 = love.graphics.newImage("images/angrycat1.jpg")
+    gameOver2 = love.graphics.newImage("images/angrycat2.jpg")
+    gameOver3 = love.graphics.newImage("images/angrycat3.jpg")
     love.graphics.setNewFont(36)
     love.graphics.setBackgroundColor(255,255,255)
 end
@@ -25,12 +30,12 @@ end
 ---------------------------------------------------------------------
 
 function love.update(dt)
-    updateTimers(dt)
-    updateCat()
-    updateScoopLocation(dt)
-    --checkForScoopCatCollision
-    --checkForScoopAction??
-    --checkPoopStatus
+    if not gameOver then
+        updateTimers(dt)
+        updateCat()
+        updateScoop(dt)
+        --checkPoopStatus
+    end
 end
 
 function updateTimers(dt)
@@ -64,6 +69,13 @@ function updateCatLocation()
         end
         catTimer = 0
     end
+end
+
+function updateScoop(dt)
+    updateScoopLocation(dt)
+    checkForScoopEdgeCollision()
+    checkForScoopCatCollision()
+    --checkForScoopAction??
 end
 
 function updateScoopLocation(dt)
@@ -111,7 +123,7 @@ function checkForScoopCatCollision()
             xCollision = true
         end
         --scoop approaches from above
-        if scoopY < catY and catY < scoopY + 65 then
+        if scoopY < catY and catY < scoopY + 60 then
             yCollision = true
         end
         --scoop approaches from below
@@ -125,8 +137,8 @@ function checkForScoopCatCollision()
 end
 
 function doScoopCatCollision()
-    scoopX = 0
-    scoopY = 0
+    chooseRandomGameOverGraphic()
+    doGameOver()
 end
 
 ---------------------------------------------------------------------
@@ -134,11 +146,15 @@ end
 ---------------------------------------------------------------------
 
 function love.draw()
-    drawLitterboxes()
-    drawCat()
-    --drawPoop()
-    drawScoop()
-    --drawMessage()
+    if not gameOver then
+        drawLitterboxes()
+        drawCat()
+        --drawPoop()
+        drawScoop()
+        --drawMessage()
+    else
+        drawGameOver()
+    end
 end
 
 function drawLitterboxes()
@@ -159,6 +175,11 @@ function drawScoop()
     love.graphics.draw(scoop, scoopX, scoopY)
 end
 
+function drawGameOver()
+    love.graphics.draw(gameOverGraphic, 0, 0)
+    drawMessage("DON'T RUSH ME")
+end
+
 ---------------------------------------------------------------------
 ----------------------UTILITY FUNCTIONS------------------------------
 ---------------------------------------------------------------------
@@ -175,8 +196,25 @@ function getRandomCatY()
     return 200*randomY + offset
 end
 
-function writeMessage(message)
+function drawMessage(message)
     love.graphics.setColor(0,0,0)
     love.graphics.print(message, 20, 550)
     love.graphics.setColor(255,255,255)
+end
+
+function doGameOver()
+    gameOver = true
+end
+
+function chooseRandomGameOverGraphic()
+    num = math.random(1,3)
+    if num == 1 then
+        gameOverGraphic = gameOver1
+    end
+    if num == 2 then
+        gameOverGraphic = gameOver2
+    end
+    if num == 3 then
+        gameOverGraphic = gameOver3
+    end
 end
