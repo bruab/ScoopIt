@@ -31,8 +31,13 @@ function initializeTimers()
 end
 
 function loadSounds()
-    meow = love.audio.newSource("sounds/meow1.wav")
-    --TODO add more sounds, pick one randomly
+    meow1 = love.audio.newSource("sounds/meow1.wav")
+    meow2 = love.audio.newSource("sounds/meow2.wav")
+    meow3 = love.audio.newSource("sounds/meow3.wav")
+    meows = {}
+    meows[1] = meow1
+    meows[2] = meow2
+    meows[3] = meow3
     --TODO add hissing sound on game over
 end
 
@@ -107,7 +112,7 @@ function updateCatLocation()
     if catTimer > catIncrement then
         catOnScreen = not catOnScreen
         if catOnScreen then
-            love.audio.play(meow)
+            playMeow()
             chooseRandomLitterbox()
             catX = currentBox.x + 10
             catY = currentBox.y + 10
@@ -329,5 +334,10 @@ function getRandomCatMessage()
     messages[6] = "There's more where that came from."
     winner = math.random(1,6)
     return messages[winner]
+end
+
+function playMeow()
+    index = math.random(1,3)
+    love.audio.play(meows[index])
 end
 
