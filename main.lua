@@ -1,10 +1,13 @@
+---------------------------------------------------------------------
+-----------------------SETUP FUNCTIONS-------------------------------
+---------------------------------------------------------------------
+
 function love.load()
     elapsedTime = 0
     catTimer = 0
+    catIncrement = 5
     catOnScreen = false
     dirtyLitterboxes = 0
-    x = 0
-    y = 0
     scoopX = 320
     scoopY = 250
     litterbox = love.graphics.newImage("images/litterbox.png")
@@ -14,20 +17,43 @@ function love.load()
     love.graphics.setBackgroundColor(255,255,255)
 end
 
+---------------------------------------------------------------------
+-----------------------UPDATE FUNCTIONS------------------------------
+---------------------------------------------------------------------
+
 function love.update(dt)
+    updateTimers(dt)
+    updateCat()
+    updateScoopLocation(dt)
+    --checkForScoopCatCollision
+    --checkForScoopAction??
+    --checkPoopStatus
+end
+
+function updateTimers(dt)
     elapsedTime = elapsedTime + dt
     catTimer = catTimer + dt
-    updateCatLocation()
-    updateScoopLocation(dt)
-    if love.keyboard.isDown("up") then
-        x = x + dt * 100
-        y = y + dt * 100
-        --num = num + 100 * dt -- increment num by 100 per second
+    if elapsedTime > 60 then
+        catIncrement = 4
     end
+    if elapsedTime > 120 then
+        catIncrement = 3
+    end
+    if elapsedTime > 180 then
+        catIncrement = 2
+    end
+    if elapsedTime > 240 then
+        catIncrement = 1
+    end
+    -- TODO clean up
+end
+
+function updateCat()
+    updateCatLocation()
 end
 
 function updateCatLocation()
-    if catTimer > 5 then
+    if catTimer > catIncrement then
         catOnScreen = not catOnScreen
         if catOnScreen then
             catX = getRandomCatX()
@@ -52,10 +78,16 @@ function updateScoopLocation(dt)
     end
 end
 
+---------------------------------------------------------------------
+-----------------------DRAW FUNCTIONS--------------------------------
+---------------------------------------------------------------------
+
 function love.draw()
     drawLitterboxes()
     drawCat()
+    --drawPoop()
     drawScoop()
+    --drawMessage()
 end
 
 function drawLitterboxes()
@@ -69,14 +101,16 @@ end
 function drawCat()
     if catOnScreen == true then
         love.graphics.draw(cat, catX, catY)
-    else
-        writeMessage("Scoop it.")
     end
 end
 
 function drawScoop()
     love.graphics.draw(scoop, scoopX, scoopY)
 end
+
+---------------------------------------------------------------------
+----------------------UTILITY FUNCTIONS------------------------------
+---------------------------------------------------------------------
 
 function getRandomCatX()
     randomX = math.random(0,3)
