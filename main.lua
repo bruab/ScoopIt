@@ -32,6 +32,8 @@ end
 
 function loadSounds()
     meow = love.audio.newSource("sounds/meow1.wav")
+    --TODO add more sounds, pick one randomly
+    --TODO add hissing sound on game over
 end
 
 function loadGraphics()
