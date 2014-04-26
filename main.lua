@@ -271,7 +271,9 @@ function doPoop()
 end
 
 function chooseRandomLitterbox()
-    --TODO if full choose a new one
     index = math.random(1, 12)
+    if litterBoxes[index].containsPoop then
+        chooseRandomLitterbox()
+    end
     return litterBoxes[index]
 end
