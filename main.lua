@@ -76,6 +76,22 @@ function updateScoopLocation(dt)
     if love.keyboard.isDown("right") then
         scoopX = scoopX + dt * 100
     end
+    checkForScoopEdgeCollision()
+end
+
+function checkForScoopEdgeCollision()
+    if scoopX < 0 then
+        scoopX = 0
+    end
+    if scoopX > 725 then
+        scoopX = 725
+    end
+    if scoopY < 0 then
+        scoopY = 0
+    end
+    if scoopY > 525 then
+        scoopY = 525
+    end
 end
 
 ---------------------------------------------------------------------
