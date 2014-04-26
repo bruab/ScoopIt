@@ -1,3 +1,5 @@
+require "litterbox"
+
 ---------------------------------------------------------------------
 -----------------------SETUP FUNCTIONS-------------------------------
 ---------------------------------------------------------------------
@@ -9,20 +11,35 @@ function love.load()
     catTimer = 0
     catIncrement = 5
     catOnScreen = false
+    poopTimer = 0
+    litterBoxes = {}
     dirtyLitterboxes = 0
     scoopX = 320
     scoopY = 250
     litterbox = love.graphics.newImage("images/litterbox.png")
     cat = love.graphics.newImage("images/cat.png")
     scoop = love.graphics.newImage("images/scoop.png")
+    poop = love.graphics.newImage("images/poop.png")
     --cat is 120x90
     --litterbox is 150x42
     --scoop is 75x75
     gameOver1 = love.graphics.newImage("images/angrycat1.jpg")
     gameOver2 = love.graphics.newImage("images/angrycat2.jpg")
     gameOver3 = love.graphics.newImage("images/angrycat3.jpg")
+    gameOver4 = love.graphics.newImage("images/giantpoop.png")
     love.graphics.setNewFont(36)
     love.graphics.setBackgroundColor(255,255,255)
+    setupLitterboxes()
+end
+
+function setupLitterboxes()
+    i = 1
+    for y=0,2 do
+        for x=0,3 do
+            litterBoxes[i] = Litterbox.create(litterbox, 200*x, 200*y)
+            i = i+1
+        end
+    end
 end
 
 ---------------------------------------------------------------------
@@ -34,13 +51,19 @@ function love.update(dt)
         updateTimers(dt)
         updateCat()
         updateScoop(dt)
-        --checkPoopStatus
+        checkPoopStatus()
     end
 end
 
 function updateTimers(dt)
     elapsedTime = elapsedTime + dt
     catTimer = catTimer + dt
+    if poopOnScreen then
+        poopTimer = poopTimer + dt
+        if poopTimer > catIncrement / 2 then
+            poopOnScreen = false
+        end
+    end
     if elapsedTime > 60 then
         catIncrement = 4
     end
@@ -64,8 +87,11 @@ function updateCatLocation()
     if catTimer > catIncrement then
         catOnScreen = not catOnScreen
         if catOnScreen then
-            catX = getRandomCatX()
-            catY = getRandomCatY()
+            currentBox = chooseRandomLitterbox()
+            catX = currentBox.x + 10
+            catY = currentBox.y + 10
+        else
+            doPoop()
         end
         catTimer = 0
     end
@@ -137,8 +163,23 @@ function checkForScoopCatCollision()
 end
 
 function doScoopCatCollision()
-    chooseRandomGameOverGraphic()
+    chooseCatCollisionGameOverGraphic()
+    gameOverMessage = "DON'T RUSH ME"
     doGameOver()
+end
+
+function checkPoopStatus()
+    count = 0
+    for i,box in ipairs(litterBoxes) do
+        if box.containsPoop then
+            count = count + 1
+        end
+    end
+    if count == 12 then
+        gameOverGraphic = gameOver4
+        gameOverMessage = "All full!"
+        doGameOver()
+    end
 end
 
 ---------------------------------------------------------------------
@@ -149,7 +190,7 @@ function love.draw()
     if not gameOver then
         drawLitterboxes()
         drawCat()
-        --drawPoop()
+        drawPoop()
         drawScoop()
         --drawMessage()
     else
@@ -158,10 +199,8 @@ function love.draw()
 end
 
 function drawLitterboxes()
-    for y=0,2 do
-        for x=0,3 do
-            love.graphics.draw(litterbox, 200*x, 200*y)
-        end
+    for i,box in ipairs(litterBoxes) do
+        box:draw()
     end
 end
 
@@ -171,13 +210,19 @@ function drawCat()
     end
 end
 
+function drawPoop()
+    if poopOnScreen then
+        love.graphics.draw(poop, catX+30, catY+30)
+    end
+end
+
 function drawScoop()
     love.graphics.draw(scoop, scoopX, scoopY)
 end
 
 function drawGameOver()
     love.graphics.draw(gameOverGraphic, 0, 0)
-    drawMessage("DON'T RUSH ME")
+    drawMessage(gameOverMessage)
 end
 
 ---------------------------------------------------------------------
@@ -186,7 +231,7 @@ end
 
 function getRandomCatX()
     randomX = math.random(0,3)
-    offset = 35
+    offset = 10
     return 200*randomX + offset
 end
 
@@ -206,7 +251,7 @@ function doGameOver()
     gameOver = true
 end
 
-function chooseRandomGameOverGraphic()
+function chooseCatCollisionGameOverGraphic()
     num = math.random(1,3)
     if num == 1 then
         gameOverGraphic = gameOver1
@@ -217,4 +262,16 @@ function chooseRandomGameOverGraphic()
     if num == 3 then
         gameOverGraphic = gameOver3
     end
+end
+
+function doPoop()
+    poopTimer = 0
+    poopOnScreen = true
+    currentBox:poopIn()
+end
+
+function chooseRandomLitterbox()
+    --TODO if full choose a new one
+    index = math.random(1, 12)
+    return litterBoxes[index]
 end
