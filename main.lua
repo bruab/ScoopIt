@@ -13,6 +13,9 @@ function love.load()
     litterbox = love.graphics.newImage("images/litterbox.png")
     cat = love.graphics.newImage("images/cat.png")
     scoop = love.graphics.newImage("images/scoop.png")
+    --cat is 120x90
+    --litterbox is 150x42
+    --scoop is 75x75
     love.graphics.setNewFont(36)
     love.graphics.setBackgroundColor(255,255,255)
 end
@@ -77,6 +80,7 @@ function updateScoopLocation(dt)
         scoopX = scoopX + dt * 100
     end
     checkForScoopEdgeCollision()
+    checkForScoopCatCollision()
 end
 
 function checkForScoopEdgeCollision()
@@ -92,6 +96,37 @@ function checkForScoopEdgeCollision()
     if scoopY > 525 then
         scoopY = 525
     end
+end
+
+function checkForScoopCatCollision()
+    if catOnScreen then
+        xCollision = false
+        yCollision = false
+        --scoop approaches from left
+        if scoopX < catX and catX < scoopX+50 then
+            xCollision = true
+        end
+        --scoop approaches from right
+        if catX < scoopX and scoopX < catX+ 65 then
+            xCollision = true
+        end
+        --scoop approaches from above
+        if scoopY < catY and catY < scoopY + 65 then
+            yCollision = true
+        end
+        --scoop approaches from below
+        if catY < scoopY and scoopY < catY + 70 then
+            yCollision = true
+        end
+        if xCollision and yCollision then
+            doScoopCatCollision()
+        end
+    end
+end
+
+function doScoopCatCollision()
+    scoopX = 0
+    scoopY = 0
 end
 
 ---------------------------------------------------------------------
@@ -115,7 +150,7 @@ function drawLitterboxes()
 end
 
 function drawCat()
-    if catOnScreen == true then
+    if catOnScreen then
         love.graphics.draw(cat, catX, catY)
     end
 end
