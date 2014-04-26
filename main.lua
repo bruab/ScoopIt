@@ -13,11 +13,13 @@ function love.load()
     scoopX = 320
     scoopY = 250
     currentMessage = ""
-    catIncrement = 5
-    scoopFreezeTimeout = 2
+    catMessage = ""
+    catIncrement = 4
+    scoopFreezeTimeout = catIncrement/4
     loadGraphics()
+    loadSounds()
     setupLitterboxes()
-    currentBox = chooseRandomLitterbox()
+    chooseRandomLitterbox()
     initializeTimers()
 end
 
@@ -26,6 +28,10 @@ function initializeTimers()
     catTimer = 0
     poopTimer = 0
     scoopFrozenTimer = 0
+end
+
+function loadSounds()
+    meow = love.audio.newSource("sounds/meow1.wav")
 end
 
 function loadGraphics()
@@ -37,7 +43,6 @@ function loadGraphics()
     gameOver2 = love.graphics.newImage("images/angrycat2.jpg")
     gameOver3 = love.graphics.newImage("images/angrycat3.jpg")
     gameOver4 = love.graphics.newImage("images/giantpoop.png")
-    love.graphics.setNewFont(36)
     love.graphics.setBackgroundColor(255,255,255)
 end
 
@@ -57,12 +62,12 @@ end
 
 function love.update(dt)
     if not gameOver then
-        updateTimers(dt)
-        updateCat()
-        updateScoop(dt)
+        checkPoopStatus()
     end
     if not gameOver then
-        checkPoopStatus()
+        updateTimers(dt)
+        updateCatLocation()
+        updateScoop(dt)
     end
 end
 
@@ -71,7 +76,7 @@ function updateTimers(dt)
     catTimer = catTimer + dt
     if poopOnScreen then
         poopTimer = poopTimer + dt
-        if poopTimer > catIncrement / 2 then
+        if poopTimer > catIncrement / 3 then
             poopOnScreen = false
         end
     end
@@ -79,33 +84,29 @@ function updateTimers(dt)
         scoopFrozenTimer = scoopFrozenTimer + dt
         if scoopFrozenTimer > scoopFreezeTimeout then
             scoopFrozen = false
+            catMessage = ""
         end
     end
-    if elapsedTime > 60 then
-        catIncrement = 4
-    end
-    if elapsedTime > 120 then
+    if elapsedTime > 30 then
         catIncrement = 3
+        scoopFreezeTimeout = catIncrement/3
     end
-    if elapsedTime > 180 then
+    if elapsedTime > 60 then
         catIncrement = 2
+        scoopFreezeTimeout = catIncrement/3
     end
-    if elapsedTime > 240 then
+    if elapsedTime > 90 then
         catIncrement = 1
+        scoopFreezeTimeout = catIncrement/3
     end
-    -- TODO clean up
-end
-
-function updateCat()
-    updateCatLocation()
-    --TODO anything else?
 end
 
 function updateCatLocation()
     if catTimer > catIncrement then
         catOnScreen = not catOnScreen
         if catOnScreen then
-            currentBox = chooseRandomLitterbox()
+            love.audio.play(meow)
+            chooseRandomLitterbox()
             catX = currentBox.x + 10
             catY = currentBox.y + 10
         else
@@ -132,6 +133,7 @@ function tryScoopPoop()
             if box:collision(scoopX, scoopY) then
                 scoopFrozen = true
                 scoopFrozenTimer = 0
+                catMessage = getRandomCatMessage()
                 box.containsPoop = false
             end
         end
@@ -140,16 +142,16 @@ end
 
 function updateScoopLocation(dt)
     if love.keyboard.isDown("up") then
-        scoopY = scoopY - dt * 100
+        scoopY = scoopY - dt * 200
     end
     if love.keyboard.isDown("down") then
-        scoopY = scoopY + dt * 100
+        scoopY = scoopY + dt * 200
     end
     if love.keyboard.isDown("left") then
-        scoopX = scoopX - dt * 100
+        scoopX = scoopX - dt * 200
     end
     if love.keyboard.isDown("right") then
-        scoopX = scoopX + dt * 100
+        scoopX = scoopX + dt * 200
     end
 end
 
@@ -277,7 +279,11 @@ end
 
 function drawMessage()
     love.graphics.setColor(0,0,0)
+    love.graphics.setNewFont(36)
     love.graphics.print(currentMessage, 20, 550)
+    love.graphics.setColor(0,0,255)
+    love.graphics.setNewFont(20)
+    love.graphics.print(catMessage, 400, 570)
     love.graphics.setColor(255,255,255)
 end
 
@@ -305,5 +311,21 @@ function chooseRandomLitterbox()
     if litterBoxes[index].containsPoop then
         chooseRandomLitterbox()
     end
-    return litterBoxes[index]
+    if litterBoxes[index]:collision(scoopX, scoopY) then
+        chooseRandomLitterbox()
+    end
+    currentBox = litterBoxes[index]
 end
+
+function getRandomCatMessage()
+    messages = {}
+    messages[1] = "Yeah, clean it."
+    messages[2] = "Ooh, that was a nasty one."
+    messages[3] = "Do my bidding, human."
+    messages[4] = "Make sure you don't miss a spot."
+    messages[5] = "Scoop it like you mean it, slave."
+    messages[6] = "There's more where that came from."
+    winner = math.random(1,6)
+    return messages[winner]
+end
+
